@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧻 トイレットペーパーお得計算機（パステル・グラデ／emojiはOS色）</title>
+  <style>
+    :root{
+      --bg1:#fff1f5; /* pink 50 */
+      --bg2:#eff6ff; /* sky 50 */
+      --card:#ffffff;
+      --ink:#374151;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+
+      --pink:#f9a8d4;     /* pink 300 */
+      --pink-200:#fbcfe8; /* pink 200 */
+      --sky:#93c5fd;      /* sky 300 */
+      --sky-200:#bfdbfe;  /* sky 200 */
+      --mint:#bbf7d0;     /* green 200 */
+      --peach:#fde2e4;    /* very light salmon */
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; padding:20px;
+      min-height:100vh;
+      font-family: "Noto Sans JP", "Segoe UI", system-ui, -apple-system, Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      color:var(--ink);
+      background: radial-gradient(1200px 800px at 20% -10%, var(--bg1), transparent 60%),
+                  radial-gradient(1200px 800px at 120% 20%, var(--bg2), transparent 55%),
+                  linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .container{
+      max-width: 980px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 12px 36px rgba(17,24,39,0.06);
+    }
+
+    /* ✅ Keep emoji in OS color; apply gradient only to .grad-txt */
+    h1{
+      margin: 6px 0 18px;
+      font-size: clamp(1.4rem, 1.1rem + 1.5vw, 2.2rem);
+      line-height: 1.2;
+      text-align:center;
+      color: var(--ink);
+    }
+    h1 .grad-txt{
+      background: linear-gradient(90deg, var(--pink) 0%, var(--sky) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      white-space: nowrap;
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      background:#fafafa;
+      border:1px solid var(--line);
+      border-radius: 999px;
+      padding:6px;
+      margin: 0 auto 14px;
+      width: fit-content;
+    }
+    .tab{
+      border:none;
+      background: transparent;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--muted);
+      transition: background .2s, transform .06s, color .2s, box-shadow .2s;
+    }
+    .tab:hover{ background:#f5f5f5; }
+    .tab:active{ transform: translateY(1px); }
+    .tab.active{
+      color:#1f2937;
+      background: linear-gradient(90deg, var(--pink-200), var(--sky-200));
+      box-shadow: 0 4px 16px rgba(147,197,253,.35);
+    }
+
+    .tab-content{ display:none; }
+    .tab-content.active{ display:block; }
+
+    .calculator-section{
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(147,197,253,.15);
+    }
+
+    h2{
+      margin: 2px 0 14px;
+      font-size: 1.1rem;
+      color:#1f2937;
+    }
+    .hint{ color:var(--muted); font-size:.9rem; }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+    @media (max-width: 768px){ .grid-2{ grid-template-columns:1fr; } }
+
+    .input-group{ margin-bottom:14px; }
+    .input-group label{
+      display:block; margin-bottom:6px; font-weight:600; color:#475569; font-size:.95rem;
+    }
+    .input-group input{
+      width:100%; padding:12px 14px; font-size:16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background:#fff;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .input-group input:focus{
+      outline:none;
+      border-color: var(--pink);
+      box-shadow: 0 0 0 4px rgba(249, 168, 212, .25);
+    }
+
+    .calculate-btn{
+      width:100%; border:none; cursor:pointer;
+      padding: 14px 18px; border-radius: 14px;
+      background: linear-gradient(90deg, var(--pink), var(--sky));
+      color:#fff; font-weight:700; font-size: 16px;
+      box-shadow: 0 8px 20px rgba(249,168,212,.25);
+      transition: transform .06s, box-shadow .2s, filter .2s;
+    }
+    .calculate-btn:hover{ filter: brightness(1.03); box-shadow: 0 10px 24px rgba(147,197,253,.3); }
+    .calculate-btn:active{ transform: translateY(1px); }
+
+    .result{
+      margin-top: 14px; padding: 14px; border-radius: 16px;
+      text-align:center; font-weight:700; font-size:18px;
+      background: linear-gradient(90deg, var(--pink-200), var(--sky-200));
+      color:#1f2937;
+      opacity: 0; transform: translateY(8px);
+      transition: all .35s ease;
+      border: 1px solid var(--line);
+    }
+    .result.show{ opacity:1; transform: translateY(0); }
+
+    .comparison-result{
+      display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px;
+    }
+    @media (max-width: 768px){ .comparison-result{ grid-template-columns:1fr; } }
+
+    .product-result{
+      padding: 16px; border-radius: 18px; text-align:center; font-weight:700;
+      border:1px solid var(--line);
+      background:#fff;
+      opacity:0; transform: translateY(8px);
+      transition: all .35s ease;
+    }
+    .product-result.show{ opacity:1; transform: translateY(0); }
+    .product-result.winner{
+      background: linear-gradient(90deg, var(--pink-200), var(--sky-200));
+      color:#1f2937;
+      box-shadow: 0 8px 22px rgba(147,197,253,.25);
+      transform: scale(1.02);
+    }
+    .product-result.loser{
+      background: linear-gradient(90deg, #fef2f2, #ffe4e6);
+      color:#374151;
+    }
+
+    .savings{
+      margin-top:10px; padding:10px 12px;
+      border-radius: 999px; display:inline-block;
+      background:#fff; border:1px dashed var(--line); color:#374151; font-weight:600;
+    }
+    .icon{ font-size: 1.8rem; margin-bottom: 6px; }
+  
+    /* ===== Mobile tuning to match flat version balance ===== */
+    @media (max-width: 480px){
+      body { padding: 20px; } /* same as flat */
+      .container { padding: 24px; border-radius: 24px; box-shadow: 0 12px 36px rgba(17,24,39,0.06); }
+      .tabs { width: 100%; justify-content: center; }
+      .tab { flex: 1; text-align: center; }
+      .calculator-section { padding: 16px; border-radius: 20px; }
+      .grid-2 { gap: 12px; }
+      .input-group { margin-bottom: 12px; }
+      .input-group input { padding: 12px 14px; }
+      .calculate-btn { padding: 14px 16px; }
+      .result { border-radius: 16px; }
+      .comparison-result { gap: 12px; }
+      .product-result { border-radius: 18px; }
+      h1 { font-size: 1.1rem; } /* keep readable, similar to flat visual size on small screens */
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="emoji">🧻</span> <span class="grad-txt">トイレットペーパーお得計算機</span></h1>
+
+    <div class="tabs" role="tablist" aria-label="表示モード">
+      <button class="tab active" onclick="switchTab(event,'single')" role="tab" aria-selected="true" aria-controls="single">かんたん計算</button>
+      <button class="tab" onclick="switchTab(event,'compare')" role="tab" aria-selected="false" aria-controls="compare">2商品比較</button>
+    </div>
+
+    <div id="single" class="tab-content active">
+      <div class="calculator-section">
+        <h2>📊 単品お得度計算 <span class="hint">（価格とロール数だけでもOK）</span></h2>
+
+        <div class="input-group">
+          <label>価格（円）</label>
+          <input type="number" id="singlePrice" placeholder="例: 298" step="0.01" inputmode="decimal">
+        </div>
+
+        <div class="input-group">
+          <label>ロール数</label>
+          <input type="number" id="singleRolls" placeholder="例: 12" step="1" inputmode="numeric">
+        </div>
+
+        <div class="input-group">
+          <label>1ロールの長さ（m）<span class="hint"> ※わかれば</span></label>
+          <input type="number" id="singleLength" placeholder="例: 60" step="0.1" inputmode="decimal">
+        </div>
+
+        <button class="calculate-btn" onclick="calculateSingle()">💰 計算する</button>
+
+        <div id="singleResult" class="result"></div>
+      </div>
+    </div>
+
+    <div id="compare" class="tab-content">
+      <div class="calculator-section">
+        <h2>🥇 商品比較計算 <span class="hint">（両方の価格・ロール数を入力）</span></h2>
+
+        <div class="grid-2">
+          <div>
+            <h3 style="margin:0 0 10px; color:#475569;">商品A</h3>
+            <div class="input-group">
+              <label>価格（円）</label>
+              <input type="number" id="priceA" placeholder="例: 298" step="0.01" inputmode="decimal">
+            </div>
+            <div class="input-group">
+              <label>ロール数</label>
+              <input type="number" id="rollsA" placeholder="例: 12" step="1" inputmode="numeric">
+            </div>
+            <div class="input-group">
+              <label>1ロールの長さ（m）<span class="hint"> ※わかれば</span></label>
+              <input type="number" id="lengthA" placeholder="例: 60" step="0.1" inputmode="decimal">
+            </div>
+          </div>
+
+          <div>
+            <h3 style="margin:0 0 10px; color:#475569;">商品B</h3>
+            <div class="input-group">
+              <label>価格（円）</label>
+              <input type="number" id="priceB" placeholder="例: 458" step="0.01" inputmode="decimal">
+            </div>
+            <div class="input-group">
+              <label>ロール数</label>
+              <input type="number" id="rollsB" placeholder="例: 18" step="1" inputmode="numeric">
+            </div>
+            <div class="input-group">
+              <label>1ロールの長さ（m）<span class="hint"> ※わかれば</span></label>
+              <input type="number" id="lengthB" placeholder="例: 60" step="0.1" inputmode="decimal">
+            </div>
+          </div>
+        </div>
+
+        <button class="calculate-btn" onclick="calculateComparison()">⚖️ 比較計算する</button>
+
+        <div id="comparisonResult" class="comparison-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(e, tabName){
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected','false');
+      });
+      e.currentTarget.classList.add('active');
+      e.currentTarget.setAttribute('aria-selected','true');
+
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+
+      // リセット（視覚的に残らないように）
+      document.getElementById('singleResult').classList.remove('show');
+      document.getElementById('comparisonResult').innerHTML = '';
+    }
+
+    function calculateSingle(){
+      const price = parseFloat(document.getElementById('singlePrice').value);
+      const rolls = parseInt(document.getElementById('singleRolls').value);
+      const length = parseFloat(document.getElementById('singleLength').value);
+
+      if(!price || !rolls){
+        alert('価格とロール数を入力してください');
+        return;
+      }
+
+      const pricePerRoll = price / rolls;
+      let html = '<div class="icon">💰</div>';
+      html += '<div>1ロールあたり: <strong>' + pricePerRoll.toFixed(2) + '円</strong></div>';
+
+      if(length){
+        const pricePerMeter = price / (rolls * length);
+        const totalLength = rolls * length;
+        html += '<div style="margin-top:8px;">総延長: <strong>' + totalLength + 'm</strong></div>';
+        html += '<div>1mあたり: <strong>' + pricePerMeter.toFixed(2) + '円</strong></div>';
+      }
+
+      const resultDiv = document.getElementById('singleResult');
+      resultDiv.innerHTML = html;
+      resultDiv.classList.add('show');
+    }
+
+    function calculateComparison(){
+      const priceA = parseFloat(document.getElementById('priceA').value);
+      const rollsA = parseInt(document.getElementById('rollsA').value);
+      const lengthA = parseFloat(document.getElementById('lengthA').value);
+
+      const priceB = parseFloat(document.getElementById('priceB').value);
+      const rollsB = parseInt(document.getElementById('rollsB').value);
+      const lengthB = parseFloat(document.getElementById('lengthB').value);
+
+      if(!priceA || !rollsA || !priceB || !rollsB){
+        alert('両方の価格とロール数を入力してください');
+        return;
+      }
+
+      const pricePerRollA = priceA / rollsA;
+      const pricePerRollB = priceB / rollsB;
+
+      let resultA = '<div class="icon">🧻</div><h3>商品A</h3>';
+      resultA += '<div>1ロールあたり: <strong>' + pricePerRollA.toFixed(2) + '円</strong></div>';
+
+      let resultB = '<div class="icon">🧻</div><h3>商品B</h3>';
+      resultB += '<div>1ロールあたり: <strong>' + pricePerRollB.toFixed(2) + '円</strong></div>';
+
+      if(lengthA && lengthB){
+        const pricePerMeterA = priceA / (rollsA * lengthA);
+        const pricePerMeterB = priceB / (rollsB * lengthB);
+
+        resultA += '<div style="margin-top:8px;">総延長: ' + (rollsA * lengthA) + 'm</div>';
+        resultA += '<div>1mあたり: <strong>' + pricePerMeterA.toFixed(2) + '円</strong></div>';
+
+        resultB += '<div style="margin-top:8px;">総延長: ' + (rollsB * lengthB) + 'm</div>';
+        resultB += '<div>1mあたり: <strong>' + pricePerMeterB.toFixed(2) + '円</strong></div>';
+
+        if(pricePerMeterA < pricePerMeterB){
+            resultA += '<div class="savings">🎉 メートル単価がよりおトクc(·ω·`c⌒っ</div>';
+          document.getElementById('comparisonResult').innerHTML =
+            '<div class="product-result winner">' + resultA + '</div>' +
+            '<div class="product-result loser">' + resultB + '</div>';
+        }else{
+            resultB += '<div class="savings">🎉 メートル単価がよりおトクc(·ω·`c⌒っ</div>';
+          document.getElementById('comparisonResult').innerHTML =
+            '<div class="product-result loser">' + resultA + '</div>' +
+            '<div class="product-result winner">' + resultB + '</div>';
+        }
+      }else{
+        if(pricePerRollA < pricePerRollB){
+            resultA += '<div class="savings">🎉 1ロール単価がよりおトクc(·ω·`c⌒っ</div>';
+          document.getElementById('comparisonResult').innerHTML =
+            '<div class="product-result winner">' + resultA + '</div>' +
+            '<div class="product-result loser">' + resultB + '</div>';
+        }else{
+            resultB += '<div class="savings">🎉 1ロール単価がよりおトクc(·ω·`c⌒っ</div>';
+          document.getElementById('comparisonResult').innerHTML =
+            '<div class="product-result loser">' + resultA + '</div>' +
+            '<div class="product-result winner">' + resultB + '</div>';
+        }
+      }
+
+      setTimeout(() => {
+        document.querySelectorAll('.product-result').forEach(el => el.classList.add('show'));
+      }, 80);
+    }
+
+    // Enter で実行
+    document.addEventListener('keypress', function(e){
+      if(e.key === 'Enter'){
+        const active = document.querySelector('.tab-content.active');
+        if(active && active.id === 'single'){ calculateSingle(); }
+        else{ calculateComparison(); }
+      }
+    });
+  </script>
+</body>
+</html>
